@@ -1,0 +1,3 @@
+= off-heap-memory
+
+Début de mes réflexions sur une présentation de la mémoire Off-Heap, et de ses usages, pour Devoxx France 2016.
