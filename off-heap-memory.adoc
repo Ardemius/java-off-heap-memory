@@ -55,23 +55,44 @@ De plus, la perte du pointeur vers le buffer rend ce dernier éligible à la gar
 La mémoire associée au pointeur est libérée au moment de la collecte.
 
 DirectByteBuffer : il y a un overhead, du fait de certaines opérations supplémentaires, comme la détection de l'architecture petit-boutiste (little-endian), ou gros-boutiste de (big-endian) de l'OS sous-jacent.
-Pour la solution ActivePivot, la classe a été réimplémentée afin de ne pas effectuer ces opérations supplémentaires.
+Pour la solution ActivePivot, la classe (DirectByteBuffer) a été réimplémentée afin de ne pas effectuer ces opérations supplémentaires.
 Cette réimplémentaion nécessite l'utilisation de la classe Unsafe
 
 == `sun.misc.Unsafe`
 
 Cette classe permet de manipuler directement la mémoire en Java.
 
-A la base, elle n'est pas censé être utilisée en dehors du jdk, il faut donc se servir de l'introspection pour y accéder :
+A la base, elle n'est pas censé être utilisée en dehors du jdk.
+Son accès est protégé (AJOUTER UNE EXPLICATION), et il faut donc se servir de l'introspection pour pouvoir l'utiliser :
 
 	Field f = Unsafe.class.getDeclaredField("theUnsafe");
 	f.setAccessible(true);
 	Unsafe unsafe = (Unsafe) f.get(null); 
 
+=== ecriture
 
-== Les risques
+Avec `Unsafe`, nous pouvons allouer de la mémoire à un emplacement dont on obtient l'adresse :
+
+	long address = unsafe.allocatememory(1024);
+
+A partir de là, il est possible d'y insérer des données :
+
+	unsafe.putInt(address, 10);
+
+en prenant soin de gérer *manuellement* leur position en mémoire
+
+	unsafe.putChar(address + 4, 'x')
+
+Ici nous avions insérer dans un 1er temps un int, donc 4 octets, donc il faut tenir compte lors de l'ajout du char suivant.
+
+=== lecture
+Le même raisonnement s'applique pour la lecture des données
+
+
+=== Les risques
 
 PRECISER : crash suite à mauvais accès mémoire
+Si on essaye d'écrire dans une zone non allouée.
 
 == Resources
 
