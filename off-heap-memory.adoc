@@ -39,7 +39,16 @@ Une solution : sauvegarder les données dans une zone mémoire non gérée, non 
 
 === Comment allouer de la mémoire Off-Heap
 
-Cela passe par l'utilisation de `java.nio.ByteBuffer`.
+
+Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
+
+Les objets concernés sont les ByteBuffers (java.nio.ByteBuffer) avec allocation directe (maximum de  2 Go par buffer).
+Concrètement il s’agit d’un tableau de Bytes qui sera stocké dans la mémoire native.
+La nature même du stockage (sous forme binaire) impose une sérialisation/désérialisation des objets.
+
+SYNTHESE DES 2 parties à faire
+
+Cela passe par l'utilisation de la classe `java.nio.ByteBuffer` et de sa méthode `allocateDirect`.
 
 Les objets instanciés à partir de cette classe vont être stockés dans la Heap. +
 Par contre, il va s'agir de "pointeurs", très légers en eux-mêmes, vers une zone mémoire en dehors de la Heap.
@@ -50,20 +59,39 @@ Manipuler le contenu de ces objets n'est pas sans contraintes :
 En effet, ce que Java va stocker dans la mémoire off-heap va être considéré comme des octets, et non des objets. +
 Ceci n'est évidemment pas bon en termes de performance.
 Par contre, c'est *très performant pour les type primitifs*.
+On ne met QUE des types primitifs en Off-Heap.
 
 De plus, la perte du pointeur vers le buffer rend ce dernier éligible à la garbage collection.
 La mémoire associée au pointeur est libérée au moment de la collecte.
 
+	//Objet léger qui pointe vers la mémoire. 
+	ByteBuffer bb = ByteBuffer.allocateDirect(1024);
+	 
+	bb.putInt(15);
+	bb.putChar('a');
+	bb.rewind();
+	 
+	int myInt = bb.getInt();
+	char myChar = bb.getChar();
+
 DirectByteBuffer : il y a un overhead, du fait de certaines opérations supplémentaires, comme la détection de l'architecture petit-boutiste (little-endian), ou gros-boutiste de (big-endian) de l'OS sous-jacent.
 Pour la solution ActivePivot, la classe (DirectByteBuffer) a été réimplémentée afin de ne pas effectuer ces opérations supplémentaires.
 Cette réimplémentaion nécessite l'utilisation de la classe Unsafe
+
+==== Un peu d'histoire...
+
+A la base, Java a plu grâce son garbage collector.
+Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++.
+CITER LE LIVRE BLANC de José sur ce point.
+
+Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
 
 == `sun.misc.Unsafe`
 
 Cette classe permet de manipuler directement la mémoire en Java.
 
 A la base, elle n'est pas censé être utilisée en dehors du jdk.
-Son accès est protégé (AJOUTER UNE EXPLICATION), et il faut donc se servir de l'introspection pour pouvoir l'utiliser :
+Son accès est protégé, et il faut donc se servir de l'introspection pour pouvoir l'utiliser :
 
 	Field f = Unsafe.class.getDeclaredField("theUnsafe");
 	f.setAccessible(true);
@@ -94,6 +122,12 @@ Le même raisonnement s'applique pour la lecture des données
 PRECISER : crash suite à mauvais accès mémoire
 Si on essaye d'écrire dans une zone non allouée.
 
+l'utilisation de Unsafe nécessite une vérification à chaque montée de version de Java.
+
+== Cas d'utilisation
+
+memory mapped file : voir Chronicle Queue (anciennement OpenHFT)
+
 == Resources
 
 * http://www.touilleur-express.fr/2015/01/14/parisjug-soiree-youngblood/ +
@@ -104,6 +138,10 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * http://blog.ippon.fr/2011/11/03/java-acces-directs-a-la-memoire-off-heap/
 * https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html[java.nio.ByteBuffer] : surtout la section _Direct vs. non-direct buffers_
 * http://mishadoff.com/blog/java-magic-part-4-sun-dot-misc-dot-unsafe/[Utilisation de Unsafe]
+* http://shekup.blogspot.fr/2011/11/java-runtime-memory-management.html : rechercher ByteBuffer pour un schéma sur la NativeHeap (Off-Heap memory)
+* http://www.javacodegeeks.com/2013/08/which-memory-is-faster-heap-or-bytebuffer-or-direct.html : voir les exemples de code dans les commentaires
+* voir http://chronicle.software/products/chronicle-queue/ pour un exemple et des explications poussées sur le memory mapped file
+* voir sur PluralSight : https://app.pluralsight.com/library/courses/understanding-java-vm-memory-management/table-of-contents
 
 
   
