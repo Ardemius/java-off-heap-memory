@@ -17,11 +17,28 @@ One document type to handle them all! (documents, blogs, slides, books, etc.)
 
 toc::[]
 
+== Modèle mémoire en Java
+
+FAIRE UN SCHEMA
+
+* Heap
+** Eden Pool
+** Survivor Pool
+** Tenured Pool
+
+* Non Heap
+** Method Area +
+This area was previously known as the permanent generation where loaded classes were stored. It has recently been removed from the JVM, and classes are now loaded as metadata to native memory of the underlying OS.
+** Native Area +
+This area holds references and variables of primitive types.
+
+Expliquer pour la Non Heap (Off Heap) le principe de Thread stack (voir Jenkov)
+
 == Exemple d'utilisation : ActivePivot
 
 * ActivePivot : base de données en mémoire, écrite en Java, très grosse volumétrie, très fortes contraintes de performance +
 
-=== Intérêts
+== Intérêts
 
 Permet d'outrepasser certaines contraintes inhérentes à Java :
 
@@ -37,7 +54,15 @@ Ces derniers vont en effet être régulièrement déplacés d'une zone mémoire 
 
 Une solution : sauvegarder les données dans une zone mémoire non gérée, non vue, par le GC (appelée mémoire Off-Heap)
 
-=== Comment allouer de la mémoire Off-Heap
+== Allocation de mémoire en Java
+
+* Tous les objets instanciés à l'aide de `new` sont alloués dans la Heap.
+* Non Direct ByteBuffer
+* Direct ByteBuffer
+* Off Heap
+
+
+== Comment allouer de la mémoire Off-Heap
 
 
 Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
@@ -58,8 +83,10 @@ Manipuler le contenu de ces objets n'est pas sans contraintes :
 * ce contenu n'est accessible que par le principe de sérialisation / désérialisation. +
 En effet, ce que Java va stocker dans la mémoire off-heap va être considéré comme des octets, et non des objets. +
 Ceci n'est évidemment pas bon en termes de performance.
+
 Par contre, c'est *très performant pour les type primitifs*.
 On ne met QUE des types primitifs en Off-Heap.
+Jenkov: All local variables of primitive types ( boolean, byte, short, char, int, long, float, double) are fully stored on the thread stack and are thus not visible to other threads.
 
 De plus, la perte du pointeur vers le buffer rend ce dernier éligible à la garbage collection.
 La mémoire associée au pointeur est libérée au moment de la collecte.
@@ -78,11 +105,11 @@ DirectByteBuffer : il y a un overhead, du fait de certaines opérations supplém
 Pour la solution ActivePivot, la classe (DirectByteBuffer) a été réimplémentée afin de ne pas effectuer ces opérations supplémentaires.
 Cette réimplémentaion nécessite l'utilisation de la classe Unsafe
 
-==== Un peu d'histoire...
+=== Un peu d'histoire...
 
 A la base, Java a plu grâce son garbage collector.
 Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++.
-CITER LE LIVRE BLANC de José sur ce point.
+En effet, en C / C++, on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
 
 Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
 
@@ -124,7 +151,7 @@ Si on essaye d'écrire dans une zone non allouée.
 
 l'utilisation de Unsafe nécessite une vérification à chaque montée de version de Java.
 
-== Cas d'utilisation
+=== Cas d'utilisation
 
 memory mapped file : voir Chronicle Queue (anciennement OpenHFT)
 
@@ -142,6 +169,11 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * http://www.javacodegeeks.com/2013/08/which-memory-is-faster-heap-or-bytebuffer-or-direct.html : voir les exemples de code dans les commentaires
 * voir http://chronicle.software/products/chronicle-queue/ pour un exemple et des explications poussées sur le memory mapped file
 * voir sur PluralSight : https://app.pluralsight.com/library/courses/understanding-java-vm-memory-management/table-of-contents
+* Livre blanc José Paumard et So@t : Java 8 - Migration et enjeux stratégiques en entreprise : pour l'histoire de Java
+* Modèle mémoire :
+** http://tutorials.jenkov.com/java-concurrency/java-memory-model.html : explication complète du modèle, mais sans parler explicitement de mémoire off-heap. +
+Voir tout particulièrement la section _The Internal Java Memory Model_
+** https://anturis.com/blog/java-virtual-machine-the-essential-guide/ : bon schéma et explications sur le modèle mémoire Java (article récent, JDK 8)
 
 
   
