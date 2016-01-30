@@ -32,13 +32,21 @@ This area was previously known as the permanent generation where loaded classes 
 ** Native Area +
 This area holds references and variables of primitive types.
 
+Voir l'article de Ippon pour le schéma de la mémoire et les explications associées (attention ! article de 2011)
+
 Expliquer pour la Non Heap (Off Heap) le principe de Thread stack (voir Jenkov)
 
-== Exemple d'utilisation : ActivePivot
+=== Un peu d'histoire...
 
-* ActivePivot : base de données en mémoire, écrite en Java, très grosse volumétrie, très fortes contraintes de performance +
+A la base, Java a plu grâce son garbage collector.
+Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++.
+En effet, en C / C++, on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
 
-== Intérêts
+Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
+
+== Pourquoi utiliser la mémoire Off-Heap ?
+
+>> mémoire off-heap = native memory = direct memory (TODO A VERIFIER)
 
 Permet d'outrepasser certaines contraintes inhérentes à Java :
 
@@ -52,18 +60,25 @@ Cela convient bien à des objets dont le cycle de vie est court, et pour des JVM
 Par contre, ce principe ne semble pas adapté à des objets lourds et à cycle de vie (très) long. +
 Ces derniers vont en effet être régulièrement déplacés d'une zone mémoire à l'autre, ce qui va être d'autant plus pénalisant que les objets sont lourds, et que l'opération de déplacement du GC est bloquante (*VERIFIER DANS QUELS CAS EXACTEMENT*)
 
+>> la mémoire off-heap n'est en elle-même ni plus ni moins rapide que la heap,
+The point of BigMemory is not that native memory is faster, but rather, it's to reduce the overhead of the garbage collector having to go through the effort of tracking down references to memory and cleaning it up.
+TODO voir http://stackoverflow.com/a/5864736/1809195
+
+Il s’agissait de trouver le meilleur ratio entre taille de la Heap et péjoration des performances dues aux traitements du Garbage Collector.
+Plus la taille de la Heap est grande, plus longues sont les opérations associées du Garbage Collector.
+
 Une solution : sauvegarder les données dans une zone mémoire non gérée, non vue, par le GC (appelée mémoire Off-Heap)
 
-== Allocation de mémoire en Java
+== Allocation de mémoire off heap en Java
 
 * Tous les objets instanciés à l'aide de `new` sont alloués dans la Heap.
 * Non Direct ByteBuffer
-* Direct ByteBuffer
+
 * Off Heap
-
-
-== Comment allouer de la mémoire Off-Heap
-
+** utilisation de JNA
+** Direct ByteBuffer
+** MemoryMappedFile
+** sun.misc.Unsafe
 
 Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
 
@@ -81,8 +96,10 @@ Par contre, il va s'agir de "pointeurs", très légers en eux-mêmes, vers une z
 Manipuler le contenu de ces objets n'est pas sans contraintes :
 
 * ce contenu n'est accessible que par le principe de sérialisation / désérialisation. +
-En effet, ce que Java va stocker dans la mémoire off-heap va être considéré comme des octets, et non des objets. +
+En effet, ce que Java va stocker dans la mémoire off-heap va être considéré comme des octets (bytes), et non des objets. +
 Ceci n'est évidemment pas bon en termes de performance.
+
+>> Direct memory can be faster than using a byte[] if you use use non bytes like int as it can read/write the whole four bytes without turning the data into bytes. However it is slower than using POJOs as it has to bounds check every access.
 
 Par contre, c'est *très performant pour les type primitifs*.
 On ne met QUE des types primitifs en Off-Heap.
@@ -90,6 +107,10 @@ Jenkov: All local variables of primitive types ( boolean, byte, short, char, int
 
 De plus, la perte du pointeur vers le buffer rend ce dernier éligible à la garbage collection.
 La mémoire associée au pointeur est libérée au moment de la collecte.
+
+>> il n’y a pas de méthode pour désallouer un objet stocké hors heap.
+En réalité une méthode de libération de la mémoire est crée automatiquement (sun.misc.Cleaner) et sera appelée par le GC lors de son prochain passage.
+sun.misc.Cleaner, se renseigner !
 
 	//Objet léger qui pointe vers la mémoire. 
 	ByteBuffer bb = ByteBuffer.allocateDirect(1024);
@@ -101,24 +122,42 @@ La mémoire associée au pointeur est libérée au moment de la collecte.
 	int myInt = bb.getInt();
 	char myChar = bb.getChar();
 
+>> libération de la mémoire (ByteBuffer)
+Tout comme pour la heap, l’espace est libéré par le GC lorsque l’objet n’est plus référencé par le code.
+Tout comme la heap il n’y a pas de relation directe entre le moment ou l’objet est libérable et le moment ou il est effectivement libéré.
+Donc il n’y a pas de magie, les objets hors heap sont bien sensibles au GC.
+
+Toutefois :
+
+Pas de phase de marquage des objets.
+Pas de phase de compaction (réorganisation de l’espace mémoire) pendant le passage du GC.
+Le nettoyage de la mémoire hors heap est donc plus rapide que son homologue de la heap.
+Il est possible d’appeler la méthode de nettoyage à tout moment (encore une fois en fouillant dans les profondeurs de l’API) :
+
+Method getCleanerMethod = buffer.getClass().getMethod("cleaner", new Class[0]);
+getCleanerMethod.setAccessible(true);
+sun.misc.Cleaner cleaner = (sun.misc.Cleaner)getCleanerMethod.invoke(buffer,
+   new Object[0]);
+cleaner.clean();
+
 DirectByteBuffer : il y a un overhead, du fait de certaines opérations supplémentaires, comme la détection de l'architecture petit-boutiste (little-endian), ou gros-boutiste de (big-endian) de l'OS sous-jacent.
 Pour la solution ActivePivot, la classe (DirectByteBuffer) a été réimplémentée afin de ne pas effectuer ces opérations supplémentaires.
 Cette réimplémentaion nécessite l'utilisation de la classe Unsafe
 
-=== Un peu d'histoire...
+=== Options de la JVM associées à la mémoire Off-Head
 
-A la base, Java a plu grâce son garbage collector.
-Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++.
-En effet, en C / C++, on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
-
-Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
+-XX:MaxDirectMemorySize= ou -Dsun.nio.MaxDirectMemorySize=
+Permet de définir la mémoire maximale réservées pour la mémoire off heap.
 
 == `sun.misc.Unsafe`
 
 Cette classe permet de manipuler directement la mémoire en Java.
+Elle est utilisée par ByteBuffer.allocateDirect().
 
 A la base, elle n'est pas censé être utilisée en dehors du jdk.
-Son accès est protégé, et il faut donc se servir de l'introspection pour pouvoir l'utiliser :
+Son accès est protégé, et il faut donc se servir de l'introspection pour pouvoir l'utiliser.
+>> les constructeurs sont privés et la méthode de classe getUnsafe() ne peut être appelée que par un Bootloader (et donc par la JVM elle même).
+	>> TODO : l'histoire du Bootloader est à préciser
 
 	Field f = Unsafe.class.getDeclaredField("theUnsafe");
 	f.setAccessible(true);
@@ -140,6 +179,21 @@ en prenant soin de gérer *manuellement* leur position en mémoire
 
 Ici nous avions insérer dans un 1er temps un int, donc 4 octets, donc il faut tenir compte lors de l'ajout du char suivant.
 
+autre example :
+
+	// Récupère une instance Unsafe
+	Unsafe unsafe = getUnsafeInstance();
+	 
+	// Réserve de la mémoire directe
+	Long allocateMemory = unsafe.allocateMemory(10);
+	 
+	// Récupération de l'espace d'allocation du champs code Commune
+	Field field = Commune.class.getDeclaredField("codeCommune");
+	Long offsetCodeCommune = unsafe.objectFieldOffset(field);
+	 
+	// On affecte une valeur à l'emplacement du champ
+	unsafe.putObject(allocateMemory, offsetCodeCommune, "325555");
+
 === lecture
 Le même raisonnement s'applique pour la lecture des données
 
@@ -148,12 +202,14 @@ Le même raisonnement s'applique pour la lecture des données
 
 PRECISER : crash suite à mauvais accès mémoire
 Si on essaye d'écrire dans une zone non allouée.
+>> l’accès à une zone mémoire non allouée provoque immanquablement le crash de la JVM.
 
 l'utilisation de Unsafe nécessite une vérification à chaque montée de version de Java.
 
-=== Cas d'utilisation
+== Exemple d'utilisation : ActivePivot
 
-memory mapped file : voir Chronicle Queue (anciennement OpenHFT)
+* ActivePivot : base de données en mémoire, écrite en Java, très grosse volumétrie, très fortes contraintes de performance
+* memory mapped file : voir Chronicle Queue (anciennement OpenHFT)
 
 == Resources
 
@@ -163,6 +219,7 @@ Travaille chez QuartetFS, éditeur d'ActivePivot, solution d'analyse multidimens
 Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * se renseigner sur `sun.misc.Unsafe`
 * http://blog.ippon.fr/2011/11/03/java-acces-directs-a-la-memoire-off-heap/
+* http://blog.ippon.fr/2011/08/29/lmax-6-millions-doperations-par-seconde/ : A la base, article sur le LMAX Disrupter, mais à voir également pour le tableau des coûts de lecture en fonction du type de mémoire
 * https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html[java.nio.ByteBuffer] : surtout la section _Direct vs. non-direct buffers_
 * http://mishadoff.com/blog/java-magic-part-4-sun-dot-misc-dot-unsafe/[Utilisation de Unsafe]
 * http://shekup.blogspot.fr/2011/11/java-runtime-memory-management.html : rechercher ByteBuffer pour un schéma sur la NativeHeap (Off-Heap memory)
@@ -170,6 +227,8 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * voir http://chronicle.software/products/chronicle-queue/ pour un exemple et des explications poussées sur le memory mapped file
 * voir sur PluralSight : https://app.pluralsight.com/library/courses/understanding-java-vm-memory-management/table-of-contents
 * Livre blanc José Paumard et So@t : Java 8 - Migration et enjeux stratégiques en entreprise : pour l'histoire de Java
+* http://stackoverflow.com/questions/22332990/java-heap-vs-direct-memory-access# : pour qui est le plus rapide entre mémoire off-heap et heap
+* http://stackoverflow.com/questions/5863316/is-java-native-memory-faster-than-the-heap : bonne explication de pourquoi il ne faut pas utiliser la mémoire off-heap avec les POJO
 * Modèle mémoire :
 ** http://tutorials.jenkov.com/java-concurrency/java-memory-model.html : explication complète du modèle, mais sans parler explicitement de mémoire off-heap. +
 Voir tout particulièrement la section _The Internal Java Memory Model_
