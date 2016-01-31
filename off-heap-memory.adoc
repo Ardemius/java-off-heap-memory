@@ -126,7 +126,7 @@ sun.misc.Cleaner, se renseigner !
 	int myInt = bb.getInt();
 	char myChar = bb.getChar();
 
->> libération de la mémoire (ByteBuffer)
+=== libération de la mémoire (ByteBuffer)
 Tout comme pour la heap, l’espace est libéré par le GC lorsque l’objet n’est plus référencé par le code.
 Tout comme la heap il n’y a pas de relation directe entre le moment ou l’objet est libérable et le moment ou il est effectivement libéré.
 Donc il n’y a pas de magie, les objets hors heap sont bien sensibles au GC.
@@ -154,6 +154,8 @@ Cette réimplémentaion nécessite l'utilisation de la classe Unsafe
 Permet de définir la mémoire maximale réservées pour la mémoire off heap.
 
 == `sun.misc.Unsafe`
+
+TODO : actualité, parler de la levée de boucliers devant la possible suppression de Unsafe en Java 9
 
 Cette classe permet de manipuler directement la mémoire en Java.
 Elle est utilisée par ByteBuffer.allocateDirect().
