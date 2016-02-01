@@ -13,9 +13,17 @@ By Thomas SCHWENDER
 :dzslides-highlight: monokai
 
 // No preamble, and so, no table of contents accepted in DZSlides. Put in comments the following lines if generating slides with this backend
-Sautez dans la mémoire off-heap !
+En dehors de la heap, un autre monde existe...
 
 toc::[]
+
+== Un peu d'histoire...
+
+A la base, la gestion automatique de la mémoire (nettoyage de la heap) par le *Garbage Collector* est une des raisons du succès de Java. +
+Cela a résolu la majorité des bugs que l'on rencontrait historiquement en C et C++, où l'on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
+
+De son côté, le principe de *mémoire off-heap* a été introduit par Java NIO, en Java 1.4 (avec les direct byte buffer, via la classe `java.nio.ByteBuffer` et sa méthode `allocateDirect`).
+Il était alors question d'améliorer les performances de Java, qui était l'une des grandes critiques des détracteurs du GC.
 
 == Modèle mémoire en Java
 
@@ -39,14 +47,6 @@ Ajouter screenshot de l'onglet Memory de la JConsole ?
 >> avec la metaspace (ou class metadata space) qui remplace la permanent generation
 
 Expliquer pour la Non Heap (Off Heap) le principe de Thread stack (voir Jenkov)
-
-== Un peu d'histoire...
-
-A la base, le garbage collector est une des raisons du succès de Java. +
-Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++. +
-En effet, en C / C++, on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
-
-Le principe de mémoire off-heap a été introduit par Java NIO, avec les direct byte buffer (`java.nio.ByteBuffer` et méthode `allocateDirect`)
 
 == Pourquoi utiliser la mémoire Off-Heap ?
 
@@ -221,11 +221,13 @@ l'utilisation de Unsafe nécessite une vérification à chaque montée de versio
 
 == Resources
 
+* histoire et genèse de la mémoire off-heap
+** http://www.soat.fr/wp-content/uploads/2015/10/Java-8-Migration-et-enjeux-strat%C3%A9giques-en-entreprise.pdf : Livre blanc José Paumard et So@t, "Java 8 - Migration et enjeux stratégiques en entreprise", section "Un peu d'histoire"
+** https://www.jcp.org/en/jsr/detail?id=51 : JSR-51 sur `java.nio`, voir plus particulièrement la section "2.3 What needs of the Java community will be addressed by the proposed specification?"
 * http://www.touilleur-express.fr/2015/01/14/parisjug-soiree-youngblood/ +
 Sujet 3 : Faire tourner une JVM avec 4 To de mémoire : yes we can par Gaëlle Guimezanes +
 Travaille chez QuartetFS, éditeur d'ActivePivot, solution d'analyse multidimensionnelle +
 Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
-* se renseigner sur `sun.misc.Unsafe`
 * http://blog.ippon.fr/2011/11/03/java-acces-directs-a-la-memoire-off-heap/ : présentation complète de la mémoire off-heap
 * http://blog.ippon.fr/2011/08/29/lmax-6-millions-doperations-par-seconde/ : A la base, article sur le LMAX Disrupter, mais à voir également pour le tableau des coûts de lecture en fonction du type de mémoire
 * https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html[java.nio.ByteBuffer] : surtout la section _Direct vs. non-direct buffers_
@@ -234,10 +236,10 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * http://www.javacodegeeks.com/2013/08/which-memory-is-faster-heap-or-bytebuffer-or-direct.html : voir les exemples de code dans les commentaires
 * voir http://chronicle.software/products/chronicle-queue/ pour un exemple et des explications poussées sur le memory mapped file
 * voir sur PluralSight : https://app.pluralsight.com/library/courses/understanding-java-vm-memory-management/table-of-contents
-* Livre blanc José Paumard et So@t : Java 8 - Migration et enjeux stratégiques en entreprise : pour l'histoire de Java
 * http://stackoverflow.com/questions/22332990/java-heap-vs-direct-memory-access# : pour qui est le plus rapide entre mémoire off-heap et heap
 * http://stackoverflow.com/questions/5863316/is-java-native-memory-faster-than-the-heap : bonne explication de pourquoi il ne faut pas utiliser la mémoire off-heap avec les POJO
 * https://dzone.com/articles/heap-vs-heap-memory-usage : pour les explications autour de OpenHFT (Chronicle Queue & Co)
+* http://www.infoq.com/articles/Open-JDK-and-HashMap-Off-Heap : article complet (par Peter Lawrey) qui insiste sur la HashMap off-heap.
 * OpenHFT / Chronicle
 ** https://www.youtube.com/watch?v=NEG8tMn36VQ : une (ancienne) présentation de OpenHFT par Peter Lawrey (Lead developper de OpenHFT)
 * Modèle mémoire :
