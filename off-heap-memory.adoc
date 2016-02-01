@@ -1,4 +1,4 @@
-= Off-heap
+= Sautez dans la mémoire off-heap !
 By Thomas SCHWENDER
 :icons: font
 // check https://github.com/Ardemius/personal-wiki/wiki/AsciiDoctor-tips for tips on table of content in GitHub
@@ -13,7 +13,7 @@ By Thomas SCHWENDER
 :dzslides-highlight: monokai
 
 // No preamble, and so, no table of contents accepted in DZSlides. Put in comments the following lines if generating slides with this backend
-One document type to handle them all! (documents, blogs, slides, books, etc.)
+Sautez dans la mémoire off-heap !
 
 toc::[]
 
@@ -40,13 +40,13 @@ Ajouter screenshot de l'onglet Memory de la JConsole ?
 
 Expliquer pour la Non Heap (Off Heap) le principe de Thread stack (voir Jenkov)
 
-=== Un peu d'histoire...
+== Un peu d'histoire...
 
-A la base, Java a plu grâce son garbage collector.
-Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++.
+A la base, le garbage collector est une des raisons du succès de Java. +
+Ce dernier, en gérant la mémoire "automatiquement", a résolu une majorité des bugs que l'on avait historiquement en C et C++. +
 En effet, en C / C++, on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
 
-Java nio a introduit le principe de mémoire off-heap (java 1.4). Java 7 l’a étendu (JSR-203/NIO2).
+Le principe de mémoire off-heap a été introduit par Java NIO, avec les direct byte buffer (`java.nio.ByteBuffer` et méthode `allocateDirect`)
 
 == Pourquoi utiliser la mémoire Off-Heap ?
 
@@ -219,15 +219,14 @@ l'utilisation de Unsafe nécessite une vérification à chaque montée de versio
 * OpenHFT (HigherFrequencyTrading) / Chronicle (nouveau nom / http://chronicle.software/) : Peter Lawrey is Lead Developper
 * Redis (REmote Dictionary Server, used by StackOverFlow, GitHub, Twitter)
 
-
 == Resources
 
 * http://www.touilleur-express.fr/2015/01/14/parisjug-soiree-youngblood/ +
-Sujet 3 : Faire tourner une JVM avec 4 To de mémoire : yes we can par Gaëlle Guimezanes
+Sujet 3 : Faire tourner une JVM avec 4 To de mémoire : yes we can par Gaëlle Guimezanes +
 Travaille chez QuartetFS, éditeur d'ActivePivot, solution d'analyse multidimensionnelle +
 Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * se renseigner sur `sun.misc.Unsafe`
-* http://blog.ippon.fr/2011/11/03/java-acces-directs-a-la-memoire-off-heap/
+* http://blog.ippon.fr/2011/11/03/java-acces-directs-a-la-memoire-off-heap/ : présentation complète de la mémoire off-heap
 * http://blog.ippon.fr/2011/08/29/lmax-6-millions-doperations-par-seconde/ : A la base, article sur le LMAX Disrupter, mais à voir également pour le tableau des coûts de lecture en fonction du type de mémoire
 * https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html[java.nio.ByteBuffer] : surtout la section _Direct vs. non-direct buffers_
 * http://mishadoff.com/blog/java-magic-part-4-sun-dot-misc-dot-unsafe/[Utilisation de Unsafe]
@@ -248,8 +247,8 @@ Voir tout particulièrement la section _The Internal Java Memory Model_
 ** http://sdjournal.org/java-8-removal-of-permgen-beta/ : remplacement de la Permanent Generation par la MetaSpace et explications associées.
 ** http://fr.slideshare.net/rgrebski/on-heap-cache-vs-offheap-cache-53098109 : pour un schéma récent du Memory Model avec la Metaspace, ainsi que des comparaisons Off-Heap / Heap avec perfs associées, TRES BON et récent, A UTILISER COMME BASE !!!! +
 jeter également un oeil à son repo https://github.com/rgrebski/confitura2015 +
-Et voici sa vidéo au confiturapl 2015 : https://www.youtube.com/watch?v=wfPl_aNj4Pc (ARGH ! pas en anglais !)
-** http://fr.slideshare.net/IonutBalosin/evolution-of-garbage-collection-in-hotspot-java-virtual-machine : j'aime bien le schéma du memory model
+Et voici sa vidéo au confiturapl 2015 : https://www.youtube.com/watch?v=wfPl_aNj4Pc (Attention ! Pas en anglais !)
+** http://fr.slideshare.net/IonutBalosin/evolution-of-garbage-collection-in-hotspot-java-virtual-machine : bon schéma du memory model
 ** http://daniel.mitterdorfer.name/talks/2015/jvm-deep-dive-ljug/#/41 : schéma du slide 41 sympa, et bon schéma des différents GC existants
 ** http://www.pointsoftware.ch/de/under-the-hood-runtime-data-areas-javas-memory-model/ : bon schéma du memory model, détaillé A UTILISER POUR DETAIL !!!!
 
