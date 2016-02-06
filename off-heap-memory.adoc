@@ -23,11 +23,14 @@ A la base, la gestion automatique de la mémoire (nettoyage de la heap) par le *
 Cela a résolu la majorité des bugs que l'on rencontrait historiquement en C et C++, où l'on ne peut pas vérifier que le pointeur utilisé est associé à une zone de mémoire réservée.
 
 De son côté, le principe de *mémoire off-heap* a été introduit par Java NIO, en Java 1.4 (avec les direct byte buffer, via la classe `java.nio.ByteBuffer` et sa méthode `allocateDirect`).
-Il était alors question d'améliorer les performances de Java, qui était l'une des grandes critiques des détracteurs du GC.
+Après la création du compilateur JIT en Java 1.2, il s'agissait de continuer à améliorer les performances du langage, qui était sa grande critique du langage à ses débuts.
 
 == Modèle mémoire en Java
 
 FAIRE UN SCHEMA
+base : http://fr.slideshare.net/rgrebski/on-heap-cache-vs-offheap-cache-53098109
+détail : http://www.pointsoftware.ch/de/under-the-hood-runtime-data-areas-javas-memory-model/ 
+retouche : https://anturis.com/blog/java-virtual-machine-the-essential-guide/
 
 * Heap
 ** Eden Pool
@@ -238,7 +241,7 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 * voir sur PluralSight : https://app.pluralsight.com/library/courses/understanding-java-vm-memory-management/table-of-contents
 * http://stackoverflow.com/questions/22332990/java-heap-vs-direct-memory-access# : pour qui est le plus rapide entre mémoire off-heap et heap
 * http://stackoverflow.com/questions/5863316/is-java-native-memory-faster-than-the-heap : bonne explication de pourquoi il ne faut pas utiliser la mémoire off-heap avec les POJO
-* https://dzone.com/articles/heap-vs-heap-memory-usage : pour les explications autour de OpenHFT (Chronicle Queue & Co)
+* https://dzone.com/articles/heap-vs-heap-memory-usage : pour les explications autour de OpenHFT (Chronicle Queue & Co), et les RISQUES et INCONVENIENTS de la mémoire off-heap
 * http://www.infoq.com/articles/Open-JDK-and-HashMap-Off-Heap : article complet (par Peter Lawrey) qui insiste sur la HashMap off-heap.
 * OpenHFT / Chronicle
 ** https://www.youtube.com/watch?v=NEG8tMn36VQ : une (ancienne) présentation de OpenHFT par Peter Lawrey (Lead developper de OpenHFT)
@@ -247,12 +250,15 @@ Voir la vidéo https://www.youtube.com/watch?v=Cskt4qtNeEI
 Voir tout particulièrement la section _The Internal Java Memory Model_
 ** https://anturis.com/blog/java-virtual-machine-the-essential-guide/ : bon schéma et explications sur le modèle mémoire Java (article récent, JDK 8) A UTILISER EN 3e !!!! (prend en compte la suppression de la permgen)
 ** http://sdjournal.org/java-8-removal-of-permgen-beta/ : remplacement de la Permanent Generation par la MetaSpace et explications associées.
+** http://java-latte.blogspot.in/2014/03/metaspace-in-java-8.html : bonne explication sur le nouveau metaspace, SURTOUT CORRECTE (il montre bien que la perm gen fait partie de la heap)
+** http://www.oracle.com/technetwork/java/javase/memorymanagement-whitepaper-150215.pdf : ancien memory model en Java 5, explique bien que la permanent generation fait partie de la heap.
 ** http://fr.slideshare.net/rgrebski/on-heap-cache-vs-offheap-cache-53098109 : pour un schéma récent du Memory Model avec la Metaspace, ainsi que des comparaisons Off-Heap / Heap avec perfs associées, TRES BON et récent, A UTILISER COMME BASE !!!! +
 jeter également un oeil à son repo https://github.com/rgrebski/confitura2015 +
-Et voici sa vidéo au confiturapl 2015 : https://www.youtube.com/watch?v=wfPl_aNj4Pc (Attention ! Pas en anglais !)
+Et voici sa vidéo au confiturapl 2015 : https://www.youtube.com/watch?v=wfPl_aNj4Pc (Attention ! Pas en anglais !) : propose une comparaison des caches Chronicle / Hazelcast / Redis
 ** http://fr.slideshare.net/IonutBalosin/evolution-of-garbage-collection-in-hotspot-java-virtual-machine : bon schéma du memory model
 ** http://daniel.mitterdorfer.name/talks/2015/jvm-deep-dive-ljug/#/41 : schéma du slide 41 sympa, et bon schéma des différents GC existants
-** http://www.pointsoftware.ch/de/under-the-hood-runtime-data-areas-javas-memory-model/ : bon schéma du memory model, détaillé A UTILISER POUR DETAIL !!!!
+** http://www.pointsoftware.ch/de/under-the-hood-runtime-data-areas-javas-memory-model/ : bon schéma du memory model, détaillé A UTILISER POUR DETAIL !!!! 
+** http://stackoverflow.com/questions/2129044/java-heap-terminology-young-old-and-permanent-generations : bon explication des différentes zones du modèle mémoire
 
 
   
